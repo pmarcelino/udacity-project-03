@@ -50,8 +50,12 @@ def get_drinks():
 @app.route("/drinks-detail")
 @requires_auth("get:drinks-detail")
 def get_drinks_detail(payload):
+    drinks = Drink.query.all()
+    
+    drinks = [drink.long() for drink in drinks]
+    
     return (jsonify({"success": True, 
-                     "drinks": ["drink 1"]}),200)
+                     "drinks": drinks}),200)
 
 '''
 @TODO implement endpoint
@@ -65,6 +69,8 @@ def get_drinks_detail(payload):
 @app.route("/drinks", methods=["POST"])
 @requires_auth("post:drinks")
 def post_drinks(payload):
+    
+    
     return (jsonify({"success": True, 
                      "drinks": ["drink 1"]}),200)
 
