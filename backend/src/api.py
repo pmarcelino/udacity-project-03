@@ -1,10 +1,11 @@
 import os
+import sys
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
 from flask_cors import CORS
 
-from .database.models import db_drop_and_create_all, setup_db, Drink
+from .database.models import db_drop_and_create_all, setup_db, Drink, db
 from .auth.auth import AuthError, requires_auth
 
 app = Flask(__name__)
@@ -70,9 +71,27 @@ def get_drinks_detail(payload):
 @requires_auth("post:drinks")
 def post_drinks(payload):
     
+    body = request.get_json()
+    title = body.get("title", None)
+    recipe = body.get("recipe", None)
+    recipe = str(json.dumps(recipe))
+
+    if "" in (title, recipe):
+        abort(422)
+
+    try:
+        new_drink = Drink(title, recipe)
+        new_drink.insert()
+    except BaseException:
+        print(sys.exc_info())
+        db.session.rollback()
+        abort(500)
+    finally:
+        db.session.close()
     
     return (jsonify({"success": True, 
-                     "drinks": ["drink 1"]}),200)
+                     "drinks": [{"title": title,
+                                 "recipe": recipe}]}),200)
 
 '''
 @TODO implement endpoint
@@ -145,6 +164,13 @@ def unprocessable(error):
         "message": "Resource not found."
     }), 404
 
+@app.errorhandler(500)
+def unprocessable(error):
+    return jsonify({
+        "success": False, 
+        "error": "internal_server_error",
+        "message": "Internal server error."
+        }), 500
 '''
 @TODO implement error handler for AuthError
     error handler should conform to general task above
