@@ -123,6 +123,20 @@ def update_drinks(payload, drink_id):
 @app.route("/drinks/<int:drink_id>", methods=["DELETE"])
 @requires_auth("delete:drinks")
 def delete_drinks(payload, drink_id):
+    
+    drink = Drink.query.filter_by(id=drink_id).one_or_none()
+
+    if drink is None:
+        abort(404)
+
+    try:
+        drink.delete()
+    except BaseException:
+        db.session.rollback()
+        abort(500)
+    finally:
+        db.session.close()
+
     return (jsonify({"success": True, 
                      "delete": drink_id}),200)
 
